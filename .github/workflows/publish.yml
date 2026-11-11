@@ -46,6 +46,20 @@ jobs:
         env:
           CI_COMMIT_SHA: ${{ github.sha }}
 
+      - name: Fetch GitHub dispatch token
+        uses: mattjmorrison-homelab/actions-openbao@dc591bde3eb71f6c6523c700060facbf6e06b362 # main
+        with:
+          role: graph-ad-reporter-dispatch
+          kv-path: homelab/graph-router/github-dispatch-token
+          output-name: GITHUB_DISPATCH_TOKEN
+
+      - name: Trigger graph-router rebuild
+        uses: mattjmorrison-homelab/actions-workflow-dispatch@82e99382b6544893cfc25f358191f2ea5a0029b4 # main
+        with:
+          repo: mattjmorrison-homelab/graph-router
+          workflow: publish.yml
+          token: ${{ env.GITHUB_DISPATCH_TOKEN }}
+
       - name: Notify Discord on failure
         if: failure()
         uses: mattjmorrison-homelab/actions-openbao@a9a15ee54f4b6a08b17ddd55df99d5109cfb5748 # main
