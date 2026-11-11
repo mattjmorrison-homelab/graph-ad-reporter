@@ -78,9 +78,7 @@ class Mutation:
         return _report_from_row(row)
 
     @strawberry.field
-    def record_candidate_domains(
-        self, id: strawberry.ID, domains: list[str]
-    ) -> Report:
+    def record_candidate_domains(self, id: strawberry.ID, domains: list[str]) -> Report:
         row = db.record_candidate_domains(int(id), domains)
         if row is None:
             raise ValueError(f"report {id} not found")

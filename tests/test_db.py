@@ -82,9 +82,7 @@ def test_record_candidate_domains_stores_json_encoded_list() -> None:
         timestamp="2026-11-10T00:00:00+00:00", client_ip="192.168.1.5"
     )
 
-    updated = db.record_candidate_domains(
-        report.id, ["a.example.com", "b.example.com"]
-    )
+    updated = db.record_candidate_domains(report.id, ["a.example.com", "b.example.com"])
 
     assert updated is not None
     assert updated.candidate_domains == '["a.example.com", "b.example.com"]'
@@ -110,9 +108,7 @@ class _FlakyAlterConnection:
     def __init__(self, real: sqlite3.Connection) -> None:
         self._real = real
 
-    def execute(
-        self, sql: str, parameters: tuple[object, ...] = ()
-    ) -> sqlite3.Cursor:
+    def execute(self, sql: str, parameters: tuple[object, ...] = ()) -> sqlite3.Cursor:
         if "ALTER TABLE" in sql:
             raise sqlite3.OperationalError("database is locked")
         return self._real.execute(sql, parameters)
@@ -127,8 +123,8 @@ def test_connect_reraises_non_duplicate_column_operational_errors() -> None:
     def flaky_connect(database: str) -> _FlakyAlterConnection:
         return _FlakyAlterConnection(original_connect(database))
 
-    with patch("ad_reporter.db.sqlite3.connect", flaky_connect):
-        with pytest.raises(sqlite3.OperationalError, match="database is locked"):
-            db.insert_report(
-                timestamp="2026-11-10T00:00:00+00:00", client_ip="192.168.1.5"
-            )
+    with (
+        patch("ad_reporter.db.sqlite3.connect", flaky_connect),
+        pytest.raises(sqlite3.OperationalError, match="database is locked"),
+    ):
+        db.insert_report(timestamp="2026-11-10T00:00:00+00:00", client_ip="192.168.1.5")
