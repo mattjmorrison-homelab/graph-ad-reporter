@@ -7,6 +7,7 @@ locking makes short-lived connections the simplest safe option under
 gunicorn's multi-worker model.
 """
 
+import json
 import os
 import sqlite3
 from dataclasses import dataclass
@@ -20,11 +21,14 @@ CREATE TABLE IF NOT EXISTS reports (
     timestamp TEXT NOT NULL,
     client_ip TEXT NOT NULL,
     resolved INTEGER NOT NULL DEFAULT 0,
-    resolution_note TEXT
+    resolution_note TEXT,
+    candidate_domains TEXT
 );
 """
 
-_SELECT_COLUMNS = "id, timestamp, client_ip, resolved, resolution_note"
+_SELECT_COLUMNS = (
+    "id, timestamp, client_ip, resolved, resolution_note, candidate_domains"
+)
 
 
 @dataclass
@@ -34,22 +38,31 @@ class ReportRow:
     client_ip: str
     resolved: bool
     resolution_note: str | None
+    candidate_domains: str | None
 
 
 def _connect() -> sqlite3.Connection:
     Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.execute(_SCHEMA)
+    try:
+        connection.execute("ALTER TABLE reports ADD COLUMN candidate_domains TEXT")
+    except sqlite3.OperationalError as error:
+        if "duplicate column name" not in str(error):
+            raise
     return connection
 
 
-def _row_to_report(row: tuple[int, str, str, int, str | None]) -> ReportRow:
+def _row_to_report(
+    row: tuple[int, str, str, int, str | None, str | None],
+) -> ReportRow:
     return ReportRow(
         id=row[0],
         timestamp=row[1],
         client_ip=row[2],
         resolved=bool(row[3]),
         resolution_note=row[4],
+        candidate_domains=row[5],
     )
 
 
@@ -103,6 +116,19 @@ def resolve_report(report_id: int, resolution_note: str | None) -> ReportRow | N
         connection.execute(
             "UPDATE reports SET resolved = 1, resolution_note = ? WHERE id = ?",
             (resolution_note, report_id),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+    return get_report(report_id)
+
+
+def record_candidate_domains(report_id: int, domains: list[str]) -> ReportRow | None:
+    connection = _connect()
+    try:
+        connection.execute(
+            "UPDATE reports SET candidate_domains = ? WHERE id = ?",
+            (json.dumps(domains), report_id),
         )
         connection.commit()
     finally:

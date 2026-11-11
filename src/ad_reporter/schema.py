@@ -2,6 +2,7 @@
 # Uses strawberry.federation.Schema to enable the _service { sdl } introspection
 # field that Apollo Gateway/Router needs for subgraph composition.
 import datetime
+import json
 
 import strawberry
 
@@ -15,6 +16,7 @@ class Report:
     client_ip: str
     resolved: bool
     resolution_note: str | None
+    candidate_domains: list[str] | None
 
 
 def _report_from_row(row: db.ReportRow) -> Report:
@@ -24,6 +26,11 @@ def _report_from_row(row: db.ReportRow) -> Report:
         client_ip=row.client_ip,
         resolved=row.resolved,
         resolution_note=row.resolution_note,
+        candidate_domains=(
+            json.loads(row.candidate_domains)
+            if row.candidate_domains is not None
+            else None
+        ),
     )
 
 
@@ -66,6 +73,15 @@ class Mutation:
         self, id: strawberry.ID, resolution_note: str | None = None
     ) -> Report:
         row = db.resolve_report(int(id), resolution_note)
+        if row is None:
+            raise ValueError(f"report {id} not found")
+        return _report_from_row(row)
+
+    @strawberry.field
+    def record_candidate_domains(
+        self, id: strawberry.ID, domains: list[str]
+    ) -> Report:
+        row = db.record_candidate_domains(int(id), domains)
         if row is None:
             raise ValueError(f"report {id} not found")
         return _report_from_row(row)
