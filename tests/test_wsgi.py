@@ -148,6 +148,41 @@ def test_resolve_report_mutation_errors_for_unknown_id() -> None:
     assert any("not found" in error["message"] for error in result["errors"])
 
 
+def test_candidate_domains_is_null_before_collection() -> None:
+    created = _run_query(
+        "mutation { reportAd { id candidateDomains } }", remote_addr="192.168.1.10"
+    )
+
+    assert created["data"]["reportAd"]["candidateDomains"] is None
+
+
+def test_record_candidate_domains_mutation_sets_decoded_list() -> None:
+    created = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.11")
+    report_id = created["data"]["reportAd"]["id"]
+
+    result = _run_query(
+        f'mutation {{ recordCandidateDomains(id: "{report_id}", '
+        'domains: ["a.example.com", "b.example.com"]) '
+        "{ id candidateDomains } }",
+        remote_addr="192.168.1.11",
+    )
+
+    assert result["data"]["recordCandidateDomains"]["candidateDomains"] == [
+        "a.example.com",
+        "b.example.com",
+    ]
+
+
+def test_record_candidate_domains_mutation_errors_for_unknown_id() -> None:
+    result = _run_query(
+        'mutation { recordCandidateDomains(id: "999999", domains: []) { id } }',
+        remote_addr="192.168.1.12",
+    )
+
+    assert result["data"] is None
+    assert any("not found" in error["message"] for error in result["errors"])
+
+
 def test_graphql_service_sdl_query_returns_federation_sdl() -> None:
     result = _run_query("{ _service { sdl } }", remote_addr="192.168.1.6")
 
