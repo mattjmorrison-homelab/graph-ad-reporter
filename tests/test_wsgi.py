@@ -55,7 +55,12 @@ def _run_query(query: str, remote_addr: str, **extra: str) -> dict:
 def test_report_ad_mutation_captures_client_ip_from_forwarded_header() -> None:
     start_response, captured = _capturing_start_response()
     request_body = json.dumps(
-        {"query": "mutation { reportAd { id resolved clientIp resolutionNote } }"}
+        {
+            "query": (
+                "mutation { ad { reportAd { id resolved clientIp "
+                "resolutionNote } } }"
+            )
+        }
     ).encode("utf-8")
 
     body = app(
@@ -69,7 +74,7 @@ def test_report_ad_mutation_captures_client_ip_from_forwarded_header() -> None:
 
     assert captured.status == "200 OK"
     parsed = json.loads(b"".join(body))
-    report = parsed["data"]["reportAd"]
+    report = parsed["data"]["ad"]["reportAd"]
     assert report["clientIp"] == "192.168.1.50"
     assert report["resolved"] is False
     assert report["resolutionNote"] is None
@@ -79,61 +84,69 @@ def test_report_ad_mutation_falls_back_to_remote_addr_without_forwarded_header()
     None
 ):
     parsed = _run_query(
-        "mutation { reportAd { clientIp } }", remote_addr="192.168.1.77"
+        "mutation { ad { reportAd { clientIp } } }", remote_addr="192.168.1.77"
     )
 
-    assert parsed["data"]["reportAd"]["clientIp"] == "192.168.1.77"
+    assert parsed["data"]["ad"]["reportAd"]["clientIp"] == "192.168.1.77"
 
 
 def test_unresolved_reports_query_excludes_resolved_reports() -> None:
-    first = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.1")
-    first_id = first["data"]["reportAd"]["id"]
-    second = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.2")
-    second_id = second["data"]["reportAd"]["id"]
+    first = _run_query(
+        "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.1"
+    )
+    first_id = first["data"]["ad"]["reportAd"]["id"]
+    second = _run_query(
+        "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.2"
+    )
+    second_id = second["data"]["ad"]["reportAd"]["id"]
 
     _run_query(
-        f'mutation {{ resolveReport(id: "{first_id}", resolutionNote: "handled") '
-        "{ id } }",
+        f'mutation {{ ad {{ resolve(id: "{first_id}", resolutionNote: "handled") '
+        "{ id } } }",
         remote_addr="192.168.1.1",
     )
 
     result = _run_query(
-        "{ unresolvedReports { id resolved } }", remote_addr="192.168.1.1"
+        "{ ad { unresolved { id resolved } } }", remote_addr="192.168.1.1"
     )
-    ids = [report["id"] for report in result["data"]["unresolvedReports"]]
+    ids = [report["id"] for report in result["data"]["ad"]["unresolved"]]
 
     assert ids == [second_id]
 
 
 def test_unresolved_reports_query_filters_by_since() -> None:
-    created = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.9")
-    report_id = created["data"]["reportAd"]["id"]
+    created = _run_query(
+        "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.9"
+    )
+    report_id = created["data"]["ad"]["reportAd"]["id"]
 
     future_result = _run_query(
-        '{ unresolvedReports(since: "2999-01-01T00:00:00+00:00") { id } }',
+        '{ ad { unresolved(since: "2999-01-01T00:00:00+00:00") { id } } }',
         remote_addr="192.168.1.9",
     )
-    assert future_result["data"]["unresolvedReports"] == []
+    assert future_result["data"]["ad"]["unresolved"] == []
 
     past_result = _run_query(
-        '{ unresolvedReports(since: "2000-01-01T00:00:00+00:00") { id } }',
+        '{ ad { unresolved(since: "2000-01-01T00:00:00+00:00") { id } } }',
         remote_addr="192.168.1.9",
     )
-    ids = [report["id"] for report in past_result["data"]["unresolvedReports"]]
+    ids = [report["id"] for report in past_result["data"]["ad"]["unresolved"]]
     assert report_id in ids
 
 
 def test_resolve_report_mutation_updates_resolved_and_note() -> None:
-    created = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.3")
-    report_id = created["data"]["reportAd"]["id"]
+    created = _run_query(
+        "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.3"
+    )
+    report_id = created["data"]["ad"]["reportAd"]["id"]
 
     result = _run_query(
-        f'mutation {{ resolveReport(id: "{report_id}", '
+        f'mutation {{ ad {{ resolve(id: "{report_id}", '
         'resolutionNote: "example.com blocked") '
-        "{ id resolved resolutionNote } }",
+        "{ id resolved resolutionNote } } }",
         remote_addr="192.168.1.3",
     )
-    report = result["data"]["resolveReport"]
+    report = result["data"]["ad"]["resolve"]
 
     assert report["resolved"] is True
     assert report["resolutionNote"] == "example.com blocked"
@@ -141,7 +154,8 @@ def test_resolve_report_mutation_updates_resolved_and_note() -> None:
 
 def test_resolve_report_mutation_errors_for_unknown_id() -> None:
     result = _run_query(
-        'mutation { resolveReport(id: "999999") { id } }', remote_addr="192.168.1.4"
+        'mutation { ad { resolve(id: "999999") { id } } }',
+        remote_addr="192.168.1.4",
     )
 
     assert result["data"] is None
@@ -150,24 +164,27 @@ def test_resolve_report_mutation_errors_for_unknown_id() -> None:
 
 def test_candidate_domains_is_null_before_collection() -> None:
     created = _run_query(
-        "mutation { reportAd { id candidateDomains } }", remote_addr="192.168.1.10"
+        "mutation { ad { reportAd { id candidateDomains } } }",
+        remote_addr="192.168.1.10",
     )
 
-    assert created["data"]["reportAd"]["candidateDomains"] is None
+    assert created["data"]["ad"]["reportAd"]["candidateDomains"] is None
 
 
 def test_record_candidate_domains_mutation_sets_decoded_list() -> None:
-    created = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.11")
-    report_id = created["data"]["reportAd"]["id"]
+    created = _run_query(
+        "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.11"
+    )
+    report_id = created["data"]["ad"]["reportAd"]["id"]
 
     result = _run_query(
-        f'mutation {{ recordCandidateDomains(id: "{report_id}", '
+        f'mutation {{ ad {{ recordCandidateDomains(id: "{report_id}", '
         'domains: ["a.example.com", "b.example.com"]) '
-        "{ id candidateDomains } }",
+        "{ id candidateDomains } } }",
         remote_addr="192.168.1.11",
     )
 
-    assert result["data"]["recordCandidateDomains"]["candidateDomains"] == [
+    assert result["data"]["ad"]["recordCandidateDomains"]["candidateDomains"] == [
         "a.example.com",
         "b.example.com",
     ]
@@ -175,7 +192,8 @@ def test_record_candidate_domains_mutation_sets_decoded_list() -> None:
 
 def test_record_candidate_domains_mutation_errors_for_unknown_id() -> None:
     result = _run_query(
-        'mutation { recordCandidateDomains(id: "999999", domains: []) { id } }',
+        'mutation { ad { recordCandidateDomains(id: "999999", domains: []) '
+        "{ id } } }",
         remote_addr="192.168.1.12",
     )
 
