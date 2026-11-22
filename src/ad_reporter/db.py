@@ -147,9 +147,7 @@ def record_candidate_domains(report_id: int, domains: list[str]) -> ReportRow | 
     return get_report(report_id)
 
 
-def record_classification_prompt_id(
-    report_id: int, prompt_id: str
-) -> ReportRow | None:
+def record_classification_prompt_id(report_id: int, prompt_id: str) -> ReportRow | None:
     connection = _connect()
     try:
         connection.execute(

@@ -211,8 +211,7 @@ def test_record_classification_prompt_id_mutation_sets_given_id() -> None:
 
 def test_record_classification_prompt_id_mutation_errors_for_unknown_id() -> None:
     result = _run_query(
-        'mutation { recordClassificationPromptId(id: "999999", promptId: "p") '
-        "{ id } }",
+        'mutation { recordClassificationPromptId(id: "999999", promptId: "p") { id } }',
         remote_addr="192.168.1.15",
     )
 
