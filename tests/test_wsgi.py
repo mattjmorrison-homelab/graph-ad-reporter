@@ -183,6 +183,43 @@ def test_record_candidate_domains_mutation_errors_for_unknown_id() -> None:
     assert any("not found" in error["message"] for error in result["errors"])
 
 
+def test_classification_prompt_id_is_null_before_submission() -> None:
+    created = _run_query(
+        "mutation { reportAd { id classificationPromptId } }",
+        remote_addr="192.168.1.13",
+    )
+
+    assert created["data"]["reportAd"]["classificationPromptId"] is None
+
+
+def test_record_classification_prompt_id_mutation_sets_given_id() -> None:
+    created = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.14")
+    report_id = created["data"]["reportAd"]["id"]
+
+    result = _run_query(
+        f'mutation {{ recordClassificationPromptId(id: "{report_id}", '
+        'promptId: "prompt-123") '
+        "{ id classificationPromptId } }",
+        remote_addr="192.168.1.14",
+    )
+
+    assert (
+        result["data"]["recordClassificationPromptId"]["classificationPromptId"]
+        == "prompt-123"
+    )
+
+
+def test_record_classification_prompt_id_mutation_errors_for_unknown_id() -> None:
+    result = _run_query(
+        'mutation { recordClassificationPromptId(id: "999999", promptId: "p") '
+        "{ id } }",
+        remote_addr="192.168.1.15",
+    )
+
+    assert result["data"] is None
+    assert any("not found" in error["message"] for error in result["errors"])
+
+
 def test_graphql_service_sdl_query_returns_federation_sdl() -> None:
     result = _run_query("{ _service { sdl } }", remote_addr="192.168.1.6")
 
