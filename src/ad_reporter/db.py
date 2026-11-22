@@ -22,12 +22,14 @@ CREATE TABLE IF NOT EXISTS reports (
     client_ip TEXT NOT NULL,
     resolved INTEGER NOT NULL DEFAULT 0,
     resolution_note TEXT,
-    candidate_domains TEXT
+    candidate_domains TEXT,
+    classification_prompt_id TEXT
 );
 """
 
 _SELECT_COLUMNS = (
-    "id, timestamp, client_ip, resolved, resolution_note, candidate_domains"
+    "id, timestamp, client_ip, resolved, resolution_note, candidate_domains, "
+    "classification_prompt_id"
 )
 
 
@@ -39,6 +41,7 @@ class ReportRow:
     resolved: bool
     resolution_note: str | None
     candidate_domains: str | None
+    classification_prompt_id: str | None
 
 
 def _connect() -> sqlite3.Connection:
@@ -50,11 +53,18 @@ def _connect() -> sqlite3.Connection:
     except sqlite3.OperationalError as error:
         if "duplicate column name" not in str(error):
             raise
+    try:
+        connection.execute(
+            "ALTER TABLE reports ADD COLUMN classification_prompt_id TEXT"
+        )
+    except sqlite3.OperationalError as error:
+        if "duplicate column name" not in str(error):
+            raise
     return connection
 
 
 def _row_to_report(
-    row: tuple[int, str, str, int, str | None, str | None],
+    row: tuple[int, str, str, int, str | None, str | None, str | None],
 ) -> ReportRow:
     return ReportRow(
         id=row[0],
@@ -63,6 +73,7 @@ def _row_to_report(
         resolved=bool(row[3]),
         resolution_note=row[4],
         candidate_domains=row[5],
+        classification_prompt_id=row[6],
     )
 
 
@@ -129,6 +140,21 @@ def record_candidate_domains(report_id: int, domains: list[str]) -> ReportRow | 
         connection.execute(
             "UPDATE reports SET candidate_domains = ? WHERE id = ?",
             (json.dumps(domains), report_id),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+    return get_report(report_id)
+
+
+def record_classification_prompt_id(
+    report_id: int, prompt_id: str
+) -> ReportRow | None:
+    connection = _connect()
+    try:
+        connection.execute(
+            "UPDATE reports SET classification_prompt_id = ? WHERE id = ?",
+            (prompt_id, report_id),
         )
         connection.commit()
     finally:
