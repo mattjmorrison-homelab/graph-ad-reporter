@@ -82,9 +82,7 @@ def test_main_resolves_report_when_all_candidates_already_covered() -> None:
 
     with (
         patch.object(submit_classification, "graphql", graphql_mock),
-        patch.object(
-            submit_classification, "pihole_auth", return_value="sid-123"
-        ),
+        patch.object(submit_classification, "pihole_auth", return_value="sid-123"),
         patch.object(
             submit_classification.requests, "get", return_value=search_response
         ) as get,
@@ -122,9 +120,7 @@ def test_main_submits_prompt_for_uncovered_domains_only() -> None:
 
     with (
         patch.object(submit_classification, "graphql", graphql_mock),
-        patch.object(
-            submit_classification, "pihole_auth", return_value="sid-123"
-        ),
+        patch.object(submit_classification, "pihole_auth", return_value="sid-123"),
         patch.object(
             submit_classification.requests,
             "get",

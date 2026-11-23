@@ -15,9 +15,7 @@ def test_graphql_posts_query_and_variables_and_returns_parsed_body() -> None:
     response = _mock_response({"data": {"ok": True}})
 
     with patch.object(_shared.requests, "post", return_value=response) as post:
-        result = _shared.graphql(
-            "http://backend.test/graphql", "{ ping }", {"a": 1}
-        )
+        result = _shared.graphql("http://backend.test/graphql", "{ ping }", {"a": 1})
 
     post.assert_called_once_with(
         "http://backend.test/graphql",

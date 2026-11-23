@@ -7,7 +7,8 @@ import requests
 from ad_reporter.cronjobs._shared import graphql
 
 BACKEND_URL = os.environ.get(
-    "BACKEND_URL", "http://ad-reporter-backend.ad-reporter.svc.cluster.local:8000/graphql"
+    "BACKEND_URL",
+    "http://ad-reporter-backend.ad-reporter.svc.cluster.local:8000/graphql",
 )
 PIHOLE_URL = os.environ.get("PIHOLE_URL", "http://pihole.pihole.svc.cluster.local:8080")
 WINDOW_SECONDS = 180
@@ -45,7 +46,9 @@ def _candidate_domains(pihole_queries: list[dict], report_epoch: float) -> list[
 
 
 def main() -> None:
-    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"]["unresolvedReports"]
+    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"][
+        "unresolvedReports"
+    ]
 
     if not reports:
         print("no unresolved reports")
