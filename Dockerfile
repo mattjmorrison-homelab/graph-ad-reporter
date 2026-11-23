@@ -29,4 +29,5 @@ COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 RUN uv sync --frozen
 COPY tests ./tests
+RUN uv run pytest
 ENTRYPOINT ["uv", "run"]
