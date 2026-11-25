@@ -44,9 +44,7 @@ def test_main_skips_report_with_candidate_domains_already_set() -> None:
 
     with (
         patch.object(collect_candidates, "graphql", graphql_mock),
-        patch.object(
-            collect_candidates.requests, "get", return_value=pihole_response
-        ),
+        patch.object(collect_candidates.requests, "get", return_value=pihole_response),
     ):
         collect_candidates.main()
 
@@ -98,9 +96,7 @@ def test_main_collects_matching_domains_within_window() -> None:
 
     with (
         patch.object(collect_candidates, "graphql", graphql_mock),
-        patch.object(
-            collect_candidates.requests, "get", return_value=pihole_response
-        ),
+        patch.object(collect_candidates.requests, "get", return_value=pihole_response),
     ):
         collect_candidates.main()
 
