@@ -6,9 +6,7 @@ import requests
 
 from ad_reporter.cronjobs._shared import graphql
 
-BACKEND_URL = os.environ.get(
-    "BACKEND_URL", "http://ad-reporter-backend.ad-reporter.svc.cluster.local:8000/graphql"
-)
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://graphql.morrisons.site/")
 PIHOLE_URL = os.environ.get("PIHOLE_URL", "http://pihole.pihole.svc.cluster.local:8080")
 WINDOW_SECONDS = 180
 
