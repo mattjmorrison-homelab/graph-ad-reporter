@@ -6,7 +6,7 @@ from ad_reporter.cronjobs._shared import graphql, pihole_auth, resolve_report
 
 BACKEND_URL = os.environ.get(
     "BACKEND_URL",
-    "http://ad-reporter-backend.ad-reporter.svc.cluster.local:8000/graphql",
+    "https://graphql.morrisons.site/",
 )
 PIHOLE_URL = os.environ.get("PIHOLE_URL", "https://pihole.morrisons.site")
 CLAUDE_URL = os.environ.get("CLAUDE_URL", "https://graphql.morrisons.site/")
