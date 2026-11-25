@@ -4,7 +4,10 @@ import requests
 
 from ad_reporter.cronjobs._shared import graphql, pihole_auth, resolve_report
 
-BACKEND_URL = os.environ.get("BACKEND_URL", "https://graphql.morrisons.site/")
+BACKEND_URL = os.environ.get(
+    "BACKEND_URL",
+    "https://graphql.morrisons.site/",
+)
 PIHOLE_URL = os.environ.get("PIHOLE_URL", "https://pihole.morrisons.site")
 CLAUDE_URL = os.environ.get("CLAUDE_URL", "https://graphql.morrisons.site/")
 
@@ -59,13 +62,17 @@ def _domain_already_covered(pihole_url: str, sid: str, domain: str) -> bool:
     response.raise_for_status()
     results = response.json()["results"]
     return (
-        len(results["gravity"]) + len(results["domains"]["exact"]) + len(results["domains"]["regex"])
+        len(results["gravity"])
+        + len(results["domains"]["exact"])
+        + len(results["domains"]["regex"])
         > 0
     )
 
 
 def main() -> None:
-    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"]["unresolvedReports"]
+    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"][
+        "unresolvedReports"
+    ]
     reports = _reports_ready_for_submission(reports)
 
     if not reports:

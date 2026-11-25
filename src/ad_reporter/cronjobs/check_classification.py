@@ -6,7 +6,10 @@ import requests
 
 from ad_reporter.cronjobs._shared import graphql, pihole_auth, resolve_report
 
-BACKEND_URL = os.environ.get("BACKEND_URL", "https://graphql.morrisons.site/")
+BACKEND_URL = os.environ.get(
+    "BACKEND_URL",
+    "https://graphql.morrisons.site/",
+)
 PIHOLE_URL = os.environ.get("PIHOLE_URL", "https://pihole.morrisons.site")
 CLAUDE_URL = os.environ.get("CLAUDE_URL", "https://graphql.morrisons.site/")
 CONFIRMED_WEBHOOK_URL = os.environ["CONFIRMED_WEBHOOK_URL"]
@@ -32,7 +35,9 @@ _JSON_ARRAY_PATTERN = re.compile(r"\[.*\]", re.DOTALL)
 
 
 def _reports_awaiting_classification(reports: list[dict]) -> list[dict]:
-    return [report for report in reports if report["classificationPromptId"] is not None]
+    return [
+        report for report in reports if report["classificationPromptId"] is not None
+    ]
 
 
 def _parse_classification_entries(raw_response: str) -> list[dict] | None:
@@ -77,7 +82,9 @@ def _handle_pending(report_id: str, prompt_job_id: str) -> None:
 
 def _handle_failed(report_id: str, prompt_job_id: str, job: dict) -> None:
     job_error = job["error"] or "unknown error"
-    print(f"report {report_id}: classification prompt {prompt_job_id} failed: {job_error}")
+    print(
+        f"report {report_id}: classification prompt {prompt_job_id} failed: {job_error}"
+    )
     resolve_report(BACKEND_URL, report_id, f"classification failed: {job_error}")
 
 
@@ -85,7 +92,9 @@ def _handle_completed(report_id: str, job: dict) -> None:
     entries = _parse_classification_entries(job["response"])
     if entries is None:
         print(f"report {report_id}: could not parse classification response")
-        resolve_report(BACKEND_URL, report_id, "could not parse classification response")
+        resolve_report(
+            BACKEND_URL, report_id, "could not parse classification response"
+        )
         return
 
     blocked_domains = []
@@ -121,7 +130,9 @@ def _handle_completed(report_id: str, job: dict) -> None:
 
 
 def main() -> None:
-    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"]["unresolvedReports"]
+    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"][
+        "unresolvedReports"
+    ]
     reports = _reports_awaiting_classification(reports)
 
     if not reports:
@@ -132,9 +143,9 @@ def main() -> None:
         report_id = report["id"]
         prompt_job_id = report["classificationPromptId"]
 
-        job = graphql(CLAUDE_URL, _PROMPT_JOB_QUERY, {"id": prompt_job_id})["data"]["claude"][
-            "promptJob"
-        ]
+        job = graphql(CLAUDE_URL, _PROMPT_JOB_QUERY, {"id": prompt_job_id})["data"][
+            "claude"
+        ]["promptJob"]
         status = job["status"]
 
         if status == "PENDING":

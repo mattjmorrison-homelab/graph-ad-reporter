@@ -6,7 +6,9 @@ import pytest
 from ad_reporter import db
 
 os.environ.setdefault("CONFIRMED_WEBHOOK_URL", "https://discord.example.com/confirmed")
-os.environ.setdefault("SUSPICIOUS_WEBHOOK_URL", "https://discord.example.com/suspicious")
+os.environ.setdefault(
+    "SUSPICIOUS_WEBHOOK_URL", "https://discord.example.com/suspicious"
+)
 
 
 @pytest.fixture(autouse=True)

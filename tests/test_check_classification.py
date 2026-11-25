@@ -147,9 +147,7 @@ def test_main_resolves_report_when_extracted_array_is_still_invalid() -> None:
                 ]
             }
         },
-        _job_response(
-            {"status": "COMPLETED", "response": raw_response, "error": None}
-        ),
+        _job_response({"status": "COMPLETED", "response": raw_response, "error": None}),
     )
 
     with (
@@ -167,7 +165,7 @@ def test_main_resolves_report_when_extracted_array_is_still_invalid() -> None:
 
 def test_main_parses_response_with_stray_text_around_json_array() -> None:
     raw_response = (
-        'Sure, here is the result:\n'
+        "Sure, here is the result:\n"
         '[{"domain": "legit.example.com", "classification": "legit", '
         '"reason": "cdn"}]\n'
         "Hope that helps!"
@@ -180,9 +178,7 @@ def test_main_parses_response_with_stray_text_around_json_array() -> None:
                 ]
             }
         },
-        _job_response(
-            {"status": "COMPLETED", "response": raw_response, "error": None}
-        ),
+        _job_response({"status": "COMPLETED", "response": raw_response, "error": None}),
     )
 
     with (
@@ -220,9 +216,7 @@ def test_main_handles_block_questionable_and_legit_entries() -> None:
 
     with (
         patch.object(check_classification, "graphql", graphql_mock),
-        patch.object(
-            check_classification, "pihole_auth", return_value="sid-123"
-        ),
+        patch.object(check_classification, "pihole_auth", return_value="sid-123"),
         patch.object(check_classification.requests, "post") as post,
         patch.object(check_classification, "resolve_report") as resolve_report,
     ):
