@@ -203,33 +203,35 @@ def test_record_candidate_domains_mutation_errors_for_unknown_id() -> None:
 
 def test_classification_prompt_id_is_null_before_submission() -> None:
     created = _run_query(
-        "mutation { reportAd { id classificationPromptId } }",
+        "mutation { ad { reportAd { id classificationPromptId } } }",
         remote_addr="192.168.1.13",
     )
 
-    assert created["data"]["reportAd"]["classificationPromptId"] is None
+    assert created["data"]["ad"]["reportAd"]["classificationPromptId"] is None
 
 
 def test_record_classification_prompt_id_mutation_sets_given_id() -> None:
-    created = _run_query("mutation { reportAd { id } }", remote_addr="192.168.1.14")
-    report_id = created["data"]["reportAd"]["id"]
+    created = _run_query(
+        "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.14"
+    )
+    report_id = created["data"]["ad"]["reportAd"]["id"]
 
     result = _run_query(
-        f'mutation {{ recordClassificationPromptId(id: "{report_id}", '
+        f'mutation {{ ad {{ recordClassificationPromptId(id: "{report_id}", '
         'promptId: "prompt-123") '
-        "{ id classificationPromptId } }",
+        "{ id classificationPromptId } } }",
         remote_addr="192.168.1.14",
     )
 
     assert (
-        result["data"]["recordClassificationPromptId"]["classificationPromptId"]
+        result["data"]["ad"]["recordClassificationPromptId"]["classificationPromptId"]
         == "prompt-123"
     )
 
 
 def test_record_classification_prompt_id_mutation_errors_for_unknown_id() -> None:
     result = _run_query(
-        'mutation { recordClassificationPromptId(id: "999999", promptId: "p") { id } }',
+        'mutation { ad { recordClassificationPromptId(id: "999999", promptId: "p") { id } } }',
         remote_addr="192.168.1.15",
     )
 
