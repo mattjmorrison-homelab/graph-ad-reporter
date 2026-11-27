@@ -17,6 +17,7 @@ class Report:
     resolved: bool
     resolution_note: str | None
     candidate_domains: list[str] | None
+    classification_prompt_id: str | None
 
 
 def _report_from_row(row: db.ReportRow) -> Report:
@@ -31,6 +32,7 @@ def _report_from_row(row: db.ReportRow) -> Report:
             if row.candidate_domains is not None
             else None
         ),
+        classification_prompt_id=row.classification_prompt_id,
     )
 
 
@@ -80,6 +82,15 @@ class AdMutation:
     @strawberry.field
     def record_candidate_domains(self, id: strawberry.ID, domains: list[str]) -> Report:
         row = db.record_candidate_domains(int(id), domains)
+        if row is None:
+            raise ValueError(f"report {id} not found")
+        return _report_from_row(row)
+
+    @strawberry.field
+    def record_classification_prompt_id(
+        self, id: strawberry.ID, prompt_id: str
+    ) -> Report:
+        row = db.record_classification_prompt_id(int(id), prompt_id)
         if row is None:
             raise ValueError(f"report {id} not found")
         return _report_from_row(row)

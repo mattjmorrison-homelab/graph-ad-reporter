@@ -16,6 +16,7 @@ def test_insert_report_creates_unresolved_row_with_given_fields() -> None:
     assert report.resolved is False
     assert report.resolution_note is None
     assert report.candidate_domains is None
+    assert report.classification_prompt_id is None
     assert report.id > 0
 
 
@@ -99,17 +100,33 @@ def test_record_candidate_domains_with_empty_list_is_distinct_from_null() -> Non
     assert updated.candidate_domains == "[]"
 
 
+def test_record_classification_prompt_id_stores_given_id() -> None:
+    report = db.insert_report(
+        timestamp="2026-11-10T00:00:00+00:00", client_ip="192.168.1.5"
+    )
+
+    updated = db.record_classification_prompt_id(report.id, "prompt-123")
+
+    assert updated is not None
+    assert updated.classification_prompt_id == "prompt-123"
+
+
+def test_record_classification_prompt_id_returns_none_for_missing_id() -> None:
+    assert db.record_classification_prompt_id(999, "prompt-123") is None
+
+
 class _FlakyAlterConnection:
     """Wraps a real sqlite3.Connection, raising a non-"duplicate column"
-    OperationalError on ALTER TABLE so _connect()'s migration re-raise path
-    can be exercised.
+    OperationalError on the ALTER TABLE targeting target_column so
+    _connect()'s migration re-raise path for that column can be exercised.
     """
 
-    def __init__(self, real: sqlite3.Connection) -> None:
+    def __init__(self, real: sqlite3.Connection, target_column: str) -> None:
         self._real = real
+        self._target_column = target_column
 
     def execute(self, sql: str, parameters: tuple[object, ...] = ()) -> sqlite3.Cursor:
-        if "ALTER TABLE" in sql:
+        if "ALTER TABLE" in sql and self._target_column in sql:
             raise sqlite3.OperationalError("database is locked")
         return self._real.execute(sql, parameters)
 
@@ -121,7 +138,22 @@ def test_connect_reraises_non_duplicate_column_operational_errors() -> None:
     original_connect = sqlite3.connect
 
     def flaky_connect(database: str) -> _FlakyAlterConnection:
-        return _FlakyAlterConnection(original_connect(database))
+        return _FlakyAlterConnection(original_connect(database), "candidate_domains")
+
+    with (
+        patch("ad_reporter.db.sqlite3.connect", flaky_connect),
+        pytest.raises(sqlite3.OperationalError, match="database is locked"),
+    ):
+        db.insert_report(timestamp="2026-11-10T00:00:00+00:00", client_ip="192.168.1.5")
+
+
+def test_connect_reraises_non_duplicate_classification_prompt_id_errors() -> None:
+    original_connect = sqlite3.connect
+
+    def flaky_connect(database: str) -> _FlakyAlterConnection:
+        return _FlakyAlterConnection(
+            original_connect(database), "classification_prompt_id"
+        )
 
     with (
         patch("ad_reporter.db.sqlite3.connect", flaky_connect),
