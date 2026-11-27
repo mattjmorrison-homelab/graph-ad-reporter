@@ -16,7 +16,7 @@ CONFIRMED_WEBHOOK_URL = os.environ["CONFIRMED_WEBHOOK_URL"]
 SUSPICIOUS_WEBHOOK_URL = os.environ["SUSPICIOUS_WEBHOOK_URL"]
 
 _UNRESOLVED_REPORTS_QUERY = """
-{ unresolvedReports { id classificationPromptId } }
+{ ad { unresolved { id classificationPromptId } } }
 """
 
 _PROMPT_JOB_QUERY = """
@@ -130,8 +130,8 @@ def _handle_completed(report_id: str, job: dict) -> None:
 
 
 def main() -> None:
-    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"][
-        "unresolvedReports"
+    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"]["ad"][
+        "unresolved"
     ]
     reports = _reports_awaiting_classification(reports)
 

@@ -16,13 +16,15 @@ WINDOW_SECONDS = 180
 _FORWARDED_STATUSES = ("FORWARDED", "CACHE", "CACHE_STALE")
 
 _UNRESOLVED_REPORTS_QUERY = """
-{ unresolvedReports { id timestamp candidateDomains } }
+{ ad { unresolved { id timestamp candidateDomains } } }
 """
 
 _RECORD_CANDIDATE_DOMAINS_MUTATION = """
 mutation($id: ID!, $domains: [String!]!) {
-  recordCandidateDomains(id: $id, domains: $domains) {
-    id
+  ad {
+    recordCandidateDomains(id: $id, domains: $domains) {
+      id
+    }
   }
 }
 """
@@ -46,8 +48,8 @@ def _candidate_domains(pihole_queries: list[dict], report_epoch: float) -> list[
 
 
 def main() -> None:
-    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"][
-        "unresolvedReports"
+    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"]["ad"][
+        "unresolved"
     ]
 
     if not reports:

@@ -15,7 +15,7 @@ def _mock_pihole_queries_response(queries: list[dict]) -> MagicMock:
 
 
 def test_main_does_nothing_when_no_unresolved_reports() -> None:
-    graphql_mock = _mock_graphql_responses({"data": {"unresolvedReports": []}})
+    graphql_mock = _mock_graphql_responses({"data": {"ad": {"unresolved": []}}})
 
     with (
         patch.object(collect_candidates, "graphql", graphql_mock),
@@ -30,13 +30,15 @@ def test_main_skips_report_with_candidate_domains_already_set() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {
-                        "id": "1",
-                        "timestamp": "2026-11-10T00:00:00+00:00",
-                        "candidateDomains": ["already.example.com"],
-                    }
-                ]
+                "ad": {
+                    "unresolved": [
+                        {
+                            "id": "1",
+                            "timestamp": "2026-11-10T00:00:00+00:00",
+                            "candidateDomains": ["already.example.com"],
+                        }
+                    ]
+                }
             }
         }
     )
@@ -58,16 +60,18 @@ def test_main_collects_matching_domains_within_window() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {
-                        "id": "1",
-                        "timestamp": "2026-11-10T00:00:00.123456+00:00",
-                        "candidateDomains": None,
-                    }
-                ]
+                "ad": {
+                    "unresolved": [
+                        {
+                            "id": "1",
+                            "timestamp": "2026-11-10T00:00:00.123456+00:00",
+                            "candidateDomains": None,
+                        }
+                    ]
+                }
             }
         },
-        {"data": {"recordCandidateDomains": {"id": "1"}}},
+        {"data": {"ad": {"recordCandidateDomains": {"id": "1"}}}},
     )
     pihole_response = _mock_pihole_queries_response(
         [
