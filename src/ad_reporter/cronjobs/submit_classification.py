@@ -12,7 +12,7 @@ PIHOLE_URL = os.environ.get("PIHOLE_URL", "https://pihole.morrisons.site")
 CLAUDE_URL = os.environ.get("CLAUDE_URL", "https://graphql.morrisons.site/")
 
 _UNRESOLVED_REPORTS_QUERY = """
-{ unresolvedReports { id candidateDomains classificationPromptId } }
+{ ad { unresolved { id candidateDomains classificationPromptId } } }
 """
 
 _SUBMIT_PROMPT_MUTATION = """
@@ -27,8 +27,10 @@ mutation($prompt: String!) {
 
 _RECORD_CLASSIFICATION_PROMPT_ID_MUTATION = """
 mutation($id: ID!, $promptId: String!) {
-  recordClassificationPromptId(id: $id, promptId: $promptId) {
-    id
+  ad {
+    recordClassificationPromptId(id: $id, promptId: $promptId) {
+      id
+    }
   }
 }
 """
@@ -70,8 +72,8 @@ def _domain_already_covered(pihole_url: str, sid: str, domain: str) -> bool:
 
 
 def main() -> None:
-    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"][
-        "unresolvedReports"
+    reports = graphql(BACKEND_URL, _UNRESOLVED_REPORTS_QUERY)["data"]["ad"][
+        "unresolved"
     ]
     reports = _reports_ready_for_submission(reports)
 

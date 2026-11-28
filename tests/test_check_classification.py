@@ -12,7 +12,7 @@ def _job_response(body: dict) -> dict:
 
 
 def test_main_does_nothing_when_no_reports_awaiting_classification() -> None:
-    graphql_mock = _mock_graphql_responses({"data": {"unresolvedReports": []}})
+    graphql_mock = _mock_graphql_responses({"data": {"ad": {"unresolved": []}}})
 
     with patch.object(check_classification, "graphql", graphql_mock):
         check_classification.main()
@@ -24,9 +24,11 @@ def test_main_ignores_reports_without_classification_prompt_id() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": None},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": None},
+                    ]
+                }
             }
         }
     )
@@ -41,9 +43,11 @@ def test_main_leaves_pending_report_untouched() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response({"status": "PENDING", "response": None, "error": None}),
@@ -62,9 +66,11 @@ def test_main_resolves_failed_report_with_error_message() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response(
@@ -89,9 +95,11 @@ def test_main_resolves_failed_report_with_unknown_error_fallback() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response({"status": "FAILED", "response": None, "error": None}),
@@ -114,9 +122,11 @@ def test_main_resolves_report_when_response_cannot_be_parsed() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response(
@@ -142,9 +152,11 @@ def test_main_resolves_report_when_extracted_array_is_still_invalid() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response({"status": "COMPLETED", "response": raw_response, "error": None}),
@@ -173,9 +185,11 @@ def test_main_parses_response_with_stray_text_around_json_array() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response({"status": "COMPLETED", "response": raw_response, "error": None}),
@@ -204,9 +218,11 @@ def test_main_handles_block_questionable_and_legit_entries() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response(
@@ -250,9 +266,11 @@ def test_main_reports_no_domains_blocked_with_no_questionable_suffix() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {"id": "1", "classificationPromptId": "job-1"},
-                ]
+                "ad": {
+                    "unresolved": [
+                        {"id": "1", "classificationPromptId": "job-1"},
+                    ]
+                }
             }
         },
         _job_response(

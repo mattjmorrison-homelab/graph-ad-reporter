@@ -38,14 +38,15 @@ def test_graphql_raises_for_non_2xx_response() -> None:
 
 
 def test_resolve_report_calls_resolve_report_mutation() -> None:
-    response = _mock_response({"data": {"resolveReport": {"id": "1"}}})
+    response = _mock_response({"data": {"ad": {"resolve": {"id": "1"}}}})
 
     with patch.object(_shared.requests, "post", return_value=response) as post:
         _shared.resolve_report("http://backend.test/graphql", "1", "handled")
 
     _, kwargs = post.call_args
     assert kwargs["json"]["variables"] == {"id": "1", "note": "handled"}
-    assert "resolveReport" in kwargs["json"]["query"]
+    assert "ad" in kwargs["json"]["query"]
+    assert "resolve(id: $id" in kwargs["json"]["query"]
 
 
 def test_pihole_auth_returns_session_sid() -> None:

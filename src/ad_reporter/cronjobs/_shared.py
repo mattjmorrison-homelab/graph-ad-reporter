@@ -2,8 +2,10 @@ import requests
 
 _RESOLVE_REPORT_MUTATION = """
 mutation($id: ID!, $note: String!) {
-  resolveReport(id: $id, resolutionNote: $note) {
-    id
+  ad {
+    resolve(id: $id, resolutionNote: $note) {
+      id
+    }
   }
 }
 """

@@ -19,7 +19,7 @@ def _mock_search_response(gravity: int, exact: int, regex: int) -> MagicMock:
 
 
 def test_main_does_nothing_when_no_reports_ready() -> None:
-    graphql_mock = _mock_graphql_responses({"data": {"unresolvedReports": []}})
+    graphql_mock = _mock_graphql_responses({"data": {"ad": {"unresolved": []}}})
 
     with (
         patch.object(submit_classification, "graphql", graphql_mock),
@@ -34,23 +34,25 @@ def test_main_excludes_reports_without_candidates_or_already_submitted() -> None
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {
-                        "id": "1",
-                        "candidateDomains": None,
-                        "classificationPromptId": None,
-                    },
-                    {
-                        "id": "2",
-                        "candidateDomains": [],
-                        "classificationPromptId": None,
-                    },
-                    {
-                        "id": "3",
-                        "candidateDomains": ["a.example.com"],
-                        "classificationPromptId": "already-submitted",
-                    },
-                ]
+                "ad": {
+                    "unresolved": [
+                        {
+                            "id": "1",
+                            "candidateDomains": None,
+                            "classificationPromptId": None,
+                        },
+                        {
+                            "id": "2",
+                            "candidateDomains": [],
+                            "classificationPromptId": None,
+                        },
+                        {
+                            "id": "3",
+                            "candidateDomains": ["a.example.com"],
+                            "classificationPromptId": "already-submitted",
+                        },
+                    ]
+                }
             }
         }
     )
@@ -68,13 +70,15 @@ def test_main_resolves_report_when_all_candidates_already_covered() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {
-                        "id": "1",
-                        "candidateDomains": ["covered.example.com"],
-                        "classificationPromptId": None,
-                    }
-                ]
+                "ad": {
+                    "unresolved": [
+                        {
+                            "id": "1",
+                            "candidateDomains": ["covered.example.com"],
+                            "classificationPromptId": None,
+                        }
+                    ]
+                }
             }
         }
     )
@@ -103,17 +107,22 @@ def test_main_submits_prompt_for_uncovered_domains_only() -> None:
     graphql_mock = _mock_graphql_responses(
         {
             "data": {
-                "unresolvedReports": [
-                    {
-                        "id": "1",
-                        "candidateDomains": ["covered.example.com", "new.example.com"],
-                        "classificationPromptId": None,
-                    }
-                ]
+                "ad": {
+                    "unresolved": [
+                        {
+                            "id": "1",
+                            "candidateDomains": [
+                                "covered.example.com",
+                                "new.example.com",
+                            ],
+                            "classificationPromptId": None,
+                        }
+                    ]
+                }
             }
         },
         {"data": {"claude": {"submitPrompt": {"id": "prompt-1"}}}},
-        {"data": {"recordClassificationPromptId": {"id": "1"}}},
+        {"data": {"ad": {"recordClassificationPromptId": {"id": "1"}}}},
     )
     covered_response = _mock_search_response(gravity=1, exact=0, regex=0)
     uncovered_response = _mock_search_response(gravity=0, exact=0, regex=0)

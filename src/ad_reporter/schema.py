@@ -51,18 +51,16 @@ def _client_ip(info: strawberry.types.Info) -> str:
 
 
 @strawberry.type
-class Query:
+class AdQuery:
     @strawberry.field
-    def unresolved_reports(
-        self, since: datetime.datetime | None = None
-    ) -> list[Report]:
+    def unresolved(self, since: datetime.datetime | None = None) -> list[Report]:
         since_str = since.isoformat() if since is not None else None
         rows = db.unresolved_reports(since=since_str)
         return [_report_from_row(row) for row in rows]
 
 
 @strawberry.type
-class Mutation:
+class AdMutation:
     @strawberry.field
     def report_ad(self, info: strawberry.types.Info) -> Report:
         client_ip = _client_ip(info)
@@ -71,9 +69,7 @@ class Mutation:
         return _report_from_row(row)
 
     @strawberry.field
-    def resolve_report(
-        self, id: strawberry.ID, resolution_note: str | None = None
-    ) -> Report:
+    def resolve(self, id: strawberry.ID, resolution_note: str | None = None) -> Report:
         row = db.resolve_report(int(id), resolution_note)
         if row is None:
             raise ValueError(f"report {id} not found")
@@ -94,6 +90,20 @@ class Mutation:
         if row is None:
             raise ValueError(f"report {id} not found")
         return _report_from_row(row)
+
+
+@strawberry.type
+class Query:
+    @strawberry.field
+    def ad(self) -> AdQuery:
+        return AdQuery()
+
+
+@strawberry.type
+class Mutation:
+    @strawberry.field
+    def ad(self) -> AdMutation:
+        return AdMutation()
 
 
 schema = strawberry.federation.Schema(query=Query, mutation=Mutation)
