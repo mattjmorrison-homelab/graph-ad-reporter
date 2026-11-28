@@ -57,8 +57,7 @@ def test_report_ad_mutation_captures_client_ip_from_forwarded_header() -> None:
     request_body = json.dumps(
         {
             "query": (
-                "mutation { ad { reportAd { id resolved clientIp "
-                "resolutionNote } } }"
+                "mutation { ad { reportAd { id resolved clientIp resolutionNote } } }"
             )
         }
     ).encode("utf-8")
@@ -91,9 +90,7 @@ def test_report_ad_mutation_falls_back_to_remote_addr_without_forwarded_header()
 
 
 def test_unresolved_reports_query_excludes_resolved_reports() -> None:
-    first = _run_query(
-        "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.1"
-    )
+    first = _run_query("mutation { ad { reportAd { id } } }", remote_addr="192.168.1.1")
     first_id = first["data"]["ad"]["reportAd"]["id"]
     second = _run_query(
         "mutation { ad { reportAd { id } } }", remote_addr="192.168.1.2"
@@ -192,8 +189,7 @@ def test_record_candidate_domains_mutation_sets_decoded_list() -> None:
 
 def test_record_candidate_domains_mutation_errors_for_unknown_id() -> None:
     result = _run_query(
-        'mutation { ad { recordCandidateDomains(id: "999999", domains: []) '
-        "{ id } } }",
+        'mutation { ad { recordCandidateDomains(id: "999999", domains: []) { id } } }',
         remote_addr="192.168.1.12",
     )
 

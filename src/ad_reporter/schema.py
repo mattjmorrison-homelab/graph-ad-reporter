@@ -53,9 +53,7 @@ def _client_ip(info: strawberry.types.Info) -> str:
 @strawberry.type
 class AdQuery:
     @strawberry.field
-    def unresolved(
-        self, since: datetime.datetime | None = None
-    ) -> list[Report]:
+    def unresolved(self, since: datetime.datetime | None = None) -> list[Report]:
         since_str = since.isoformat() if since is not None else None
         rows = db.unresolved_reports(since=since_str)
         return [_report_from_row(row) for row in rows]
@@ -71,9 +69,7 @@ class AdMutation:
         return _report_from_row(row)
 
     @strawberry.field
-    def resolve(
-        self, id: strawberry.ID, resolution_note: str | None = None
-    ) -> Report:
+    def resolve(self, id: strawberry.ID, resolution_note: str | None = None) -> Report:
         row = db.resolve_report(int(id), resolution_note)
         if row is None:
             raise ValueError(f"report {id} not found")
